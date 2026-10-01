@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+
+# Verilog / SystemVerilog simulation files
+*.vcd
+*.fst
+*.lxt
+*.lxt2
+
+# Simulator-generated files
+work/
+transcript
+vsim.wlf
+*.log
+
+# Icarus Verilog
+*.vvp
+a.out
+
+
