@@ -1,3 +1,4 @@
+
 // ========== SYNTHESIS TEMPLATE #1: COMBINATIONAL LOGIC ==========
 // Use for: Pure combinational logic (no memory, no state)
 // Key requirement: ALL inputs in sensitivity list (or use always @(*) in Verilog-2001)
