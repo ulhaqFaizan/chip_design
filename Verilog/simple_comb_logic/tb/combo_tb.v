@@ -34,6 +34,6 @@ module tb;
 			#10; // Wait 10 time units between test vectors
 		end
 		// finish simulation
-		$finish();
+		$finish;
 	end
 endmodule
