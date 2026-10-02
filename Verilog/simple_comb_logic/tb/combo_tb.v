@@ -33,5 +33,7 @@ module tb;
 			{a, b, c, d, e} = i; // Concatenation assigns bits from i to inputs
 			#10; // Wait 10 time units between test vectors
 		end
+		// finish simulation
+		$finish();
 	end
 endmodule
