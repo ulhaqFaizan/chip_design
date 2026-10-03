@@ -9,3 +9,16 @@ module fa (	input 	a, b, cin,
 	// This is the standard full adder carry equation
 	assign cout = (a & b) | ((a ^ b) & cin);
 endmodule
+
+// full adder with always block 
+module fa1 (	input 	a, b, cin,
+			output reg	sum, cout);
+
+ // All THREE inputs in sensitivity list
+ always @ (a or b or cin) begin
+ 	// Three input addition: a + b + cin
+ 	// Result is 2 bits: cout (bit[1]) and sum (bit[0])
+ {cout, sum} = a + b + cin;
+ end
+
+endmodule
