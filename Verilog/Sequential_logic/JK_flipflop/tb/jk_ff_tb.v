@@ -1,50 +1,56 @@
-module tb;
-	// Declare testbench variables
-	reg j, k, rstn, clk;
-	wire q; 				// Output from DUT (must be wire)
-	integer i;
-	reg [2:0] dly;
+module tb_jk;
+  reg        clk;
+  reg        j, k;
+  wire       q;
+  reg        exp_q;               // Expected q from the reference model
+  reg  [1:0] jk_seq [0:7];        // {j, k} pairs to apply, in order
+  integer    i, errors;
 
-	// Generate clock: 50% duty cycle, 20ns period (50 MHz)
-	always #10 clk = ~clk;
+  jk_ff u0 (.j(j), .k(k), .clk(clk), .q(q));
 
-	// Instantiate the JK flip-flop design under test
-	jk_ff u0 (
-		.j(j),
-		.k(k),
-		.clk(clk),
-		.rstn(rstn),
-		.q(q)
-	);
+  // Clock: period of 10, rising edges at 5, 15, 25, ...
+  always #5 clk = ~clk;
 
-	// Stimulus generation
-	initial begin
-		// Initialize all inputs to zero at time 0
-		{j, k, rstn, clk} <= 0;
+  initial begin
+    // Stimulus sequence: start with reset, since q is x until set or reset
+    jk_seq[0] = 2'b01;   // Reset:  q -> 0
+    jk_seq[1] = 2'b00;   // Hold:   q stays 0
+    jk_seq[2] = 2'b10;   // Set:    q -> 1
+    jk_seq[3] = 2'b00;   // Hold:   q stays 1
+    jk_seq[4] = 2'b11;   // Toggle: q -> 0
+    jk_seq[5] = 2'b11;   // Toggle: q -> 1
+    jk_seq[6] = 2'b01;   // Reset:  q -> 0
+    jk_seq[7] = 2'b11;   // Toggle: q -> 1
 
-		// Release reset after 10ns to start operation
-		#10 rstn <= 1;
+    clk    = 0;          // Initialize clk, or ~x stays x and no edge ever occurs
+    {j, k} = 2'b00;
+    errors = 0;
+    exp_q  = 1'bx;
 
-		// Apply random stimulus: 10 iterations
-		for (i = 0; i < 10; i = i+1) begin
-			dly = $random; // Random delay (0-7 ns)
-			#(dly) j <= $random; // Random J input
-			#(dly) k <= $random; // Random K input
-		end
+    for (i = 0; i < 8; i = i + 1) begin
+      @(negedge clk);             // Change inputs away from the rising edge
+      {j, k} = jk_seq[i];
 
-		// Let simulation run a bit longer, then finish
-		#20 $finish;
-	end
+      @(posedge clk);             // Flip-flop samples j and k here
+      #1;                         // Let q update before checking
 
-	// Monitor output changes
-	initial begin
-		$monitor("Time=%0t | rstn=%b j=%b k=%b q=%b",
-		$time, rstn, j, k, q);
-	end
+      // Reference model, written as a lookup instead of the equation
+      case ({j, k})
+        2'b00 : exp_q = exp_q;
+        2'b01 : exp_q = 1'b0;
+        2'b10 : exp_q = 1'b1;
+        2'b11 : exp_q = ~exp_q;
+      endcase
 
-	// Waveform dumping for analysis
-	initial begin
-		$dumpfile("jk_ff.vcd");
-		$dumpvars(0, tb);
-	end
+      $display("[%0t] j=%b k=%b q=%b", $time, j, k, q);
+      if (q !== exp_q) begin
+        $display("  ERROR: expected q=%b", exp_q);
+        errors = errors + 1;
+      end
+    end
+
+    if (errors == 0) $display("PASS: all JK operations correct");
+    else             $display("FAIL: %0d mismatches", errors);
+    $finish;
+  end
 endmodule
